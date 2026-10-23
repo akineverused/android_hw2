@@ -5,7 +5,7 @@ import com.example.foodgram.model.Recipe
 object DummyData {
     val sampleRecipes = listOf(
         Recipe(
-            id = "1",
+            id = 1,
             title = "Классический Плов",
             category = "Главное блюдо",
             cookingTimeMinutes = 90,
@@ -20,7 +20,7 @@ object DummyData {
             )
         ),
         Recipe(
-            id = "2",
+            id = 2,
             title = "Паста Карбонара",
             category = "Главное блюдо",
             cookingTimeMinutes = 20,
@@ -34,7 +34,7 @@ object DummyData {
             )
         ),
         Recipe(
-            id = "3",
+            id = 3,
             title = "Ягодный Чизкейк",
             category = "Десерт",
             cookingTimeMinutes = 45,
@@ -48,7 +48,7 @@ object DummyData {
             )
         ),
         Recipe(
-            id = "4",
+            id = 4,
             title = "Пышные Панкейки",
             category = "Завтрак",
             cookingTimeMinutes = 15,
@@ -62,7 +62,7 @@ object DummyData {
             )
         ),
         Recipe(
-            id = "5",
+            id = 5,
             title = "Банановый Смузи",
             category = "Напитки",
             cookingTimeMinutes = 5,
@@ -75,7 +75,7 @@ object DummyData {
             )
         ),
         Recipe(
-            id = "6",
+            id = 6,
             title = "Свежий салат Цезарь",
             category = "Перекус",
             cookingTimeMinutes = 15,

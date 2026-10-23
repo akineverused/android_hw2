@@ -14,6 +14,11 @@ import com.example.foodgram.ui.theme.components.ActionButtonsRow
 import com.example.foodgram.ui.theme.components.FilterChipGroup
 import com.example.foodgram.ui.theme.components.RecipeCard
 import com.example.foodgram.ui.theme.components.RecipeDetailBottomSheet
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,9 +124,47 @@ fun MainScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (currentRecipe != null) {
+                        var dragAmount by remember(currentRecipe.id) {
+                            mutableFloatStateOf(0f)
+                        }
+
                         RecipeCard(
                             recipe = currentRecipe,
-                            onClick = { viewModel.selectRecipeForDetails(currentRecipe) }
+                            onClick = {
+                                viewModel.selectRecipeForDetails(currentRecipe)
+                            },
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    translationX = dragAmount
+                                    rotationZ = dragAmount / 30f
+                                }
+                                .pointerInput(currentRecipe.id) {
+                                    detectHorizontalDragGestures(
+                                        onHorizontalDrag = { _, dragDelta ->
+                                            dragAmount += dragDelta
+                                        },
+                                        onDragEnd = {
+                                            when {
+                                                dragAmount > 100f -> {
+                                                    viewModel.onSaveRecipe(currentRecipe)
+                                                }
+
+                                                dragAmount < -100f -> {
+                                                    viewModel.onSkipRecipe(currentRecipe)
+                                                }
+
+                                                else -> {
+                                                    dragAmount = 0f
+                                                }
+                                            }
+
+                                            dragAmount = 0f
+                                        },
+                                        onDragCancel = {
+                                            dragAmount = 0f
+                                        }
+                                    )
+                                }
                         )
                     } else {
                         Column(

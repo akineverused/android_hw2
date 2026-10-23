@@ -102,4 +102,11 @@ class MainViewModel : ViewModel() {
 
         _uiState.update { it.copy(availableRecipes = filtered) }
     }
+
+    fun addRecipe(recipe: Recipe) {
+        _uiState.value = _uiState.value.copy(
+            availableRecipes = _uiState.value.availableRecipes + recipe,
+            myRecipes = _uiState.value.myRecipes + recipe
+        )
+    }
 }

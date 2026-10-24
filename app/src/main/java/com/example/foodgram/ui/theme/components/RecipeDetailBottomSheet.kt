@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.foodgram.model.Recipe
+import androidx.compose.foundation.lazy.itemsIndexed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,9 +68,9 @@ fun RecipeDetailBottomSheet(
                     .fillMaxWidth()
                     .heightIn(max = 200.dp)
             ) {
-                items(recipe.instructions) { step ->
+                itemsIndexed(recipe.instructions) { index, step ->
                     Text(
-                        text = "1. $step",
+                        text = "${index + 1}. $step",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(vertical = 4.dp)
                     )

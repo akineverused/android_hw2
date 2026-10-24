@@ -104,9 +104,32 @@ class MainViewModel : ViewModel() {
     }
 
     fun addRecipe(recipe: Recipe) {
-        _uiState.value = _uiState.value.copy(
-            availableRecipes = _uiState.value.availableRecipes + recipe,
-            myRecipes = _uiState.value.myRecipes + recipe
-        )
+        _uiState.update { currentState ->
+            currentState.copy(
+                myRecipes = currentState.myRecipes + recipe
+            )
+        }
+    }
+
+    fun removeSavedRecipe(recipe: Recipe) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                savedRecipes = currentState.savedRecipes.filter {
+                    it.id != recipe.id
+                }
+            )
+        }
+
+        applyFilters()
+    }
+
+    fun deleteMyRecipe(recipe: Recipe) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                myRecipes = currentState.myRecipes.filter {
+                    it.id != recipe.id
+                }
+            )
+        }
     }
 }

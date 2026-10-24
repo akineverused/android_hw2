@@ -33,6 +33,8 @@ fun AppNavigation() {
     var category by rememberSaveable { mutableStateOf("") }
     var cookingTime by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
+    var ingredients by rememberSaveable { mutableStateOf(listOf("")) }
+    var instructions by rememberSaveable { mutableStateOf(listOf("")) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
@@ -107,10 +109,15 @@ fun AppNavigation() {
                         category = ""
                         cookingTime = ""
                         description = ""
-
+                        ingredients = listOf("")
+                        instructions = listOf("")
                         viewModel.addRecipe(recipe)
                         navController.popBackStack()
                     },
+                    ingredients = ingredients,
+                    onIngredientsChange = { ingredients = it },
+                    instructions = instructions,
+                    onInstructionsChange = { instructions = it },
                     onBack = {
                         navController.popBackStack()
                     }

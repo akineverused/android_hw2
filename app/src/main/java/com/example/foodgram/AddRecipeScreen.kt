@@ -26,6 +26,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.foodgram.model.Recipe
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
+import coil3.compose.AsyncImage
+import com.example.foodgram.model.CurrentUser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +58,16 @@ fun AddRecipeScreen(
 ) {
     var categoryMenuExpanded by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    var selectedImageUri by rememberSaveable {
+        mutableStateOf<String?>(null)
+    }
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri?.toString()
     }
 
     val categories = listOf(
@@ -145,6 +166,53 @@ fun AddRecipeScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
+            text = "Recipe photo",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (selectedImageUri != null) {
+            AsyncImage(
+                model = selectedImageUri,
+                contentDescription = "Selected recipe photo",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    selectedImageUri = null
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Remove photo")
+            }
+        }
+
+        Button(
+            onClick = {
+                imagePicker.launch("image/*")
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                if (selectedImageUri == null) {
+                    "Choose photo"
+                } else {
+                    "Change photo"
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
             text = "Ingredients",
             style = MaterialTheme.typography.titleMedium
         )
@@ -238,7 +306,10 @@ fun AddRecipeScreen(
                             .filter { it.isNotBlank() },
                         instructions = instructions
                             .map { it.trim() }
-                            .filter { it.isNotBlank() }
+                            .filter { it.isNotBlank() },
+                        imageUrl = selectedImageUri.orEmpty(),
+                        authorId = CurrentUser.id,
+                        authorName = CurrentUser.name
                     )
 
                     onRecipeAdded(recipe)

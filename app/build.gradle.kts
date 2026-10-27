@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.foodgram"
-        minSdk = 24
+        minSdk = 37
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -55,4 +55,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.runtime:runtime-saveable")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0")
 }

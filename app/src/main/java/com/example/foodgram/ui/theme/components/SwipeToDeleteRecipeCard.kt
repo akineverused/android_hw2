@@ -5,26 +5,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
-import kotlin.math.roundToInt
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 
 enum class DeleteSwipeDirection {
     RIGHT,
@@ -35,9 +33,14 @@ enum class DeleteSwipeDirection {
 fun SwipeToDeleteRecipeCard(
     direction: DeleteSwipeDirection,
     onDeleteRequest: () -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
+    actionColor: Color = Color(0xFFD32F2F),
+    actionIcon: ImageVector = Icons.Default.Delete,
+    actionDescription: String = "Удалить рецепт"
 ) {
-    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetX by remember {
+        mutableFloatStateOf(0f)
+    }
 
     val threshold = 120.dp
     val maxSwipe = 180.dp
@@ -45,14 +48,16 @@ fun SwipeToDeleteRecipeCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(380.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFFD32F2F)),
+            .clip(RoundedCornerShape(18.dp))
+            .background(
+                color = actionColor,
+                shape = RoundedCornerShape(18.dp)
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Delete,
-            contentDescription = "Удалить рецепт",
+            imageVector = actionIcon,
+            contentDescription = actionDescription,
             tint = Color.White,
             modifier = Modifier
                 .align(
@@ -62,13 +67,12 @@ fun SwipeToDeleteRecipeCard(
                         Alignment.CenterEnd
                     }
                 )
-                .padding(horizontal = 28.dp)
+                .padding(horizontal = 24.dp)
         )
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(380.dp)
                 .graphicsLayer {
                     translationX = offsetX
                 }
@@ -91,19 +95,23 @@ fun SwipeToDeleteRecipeCard(
                             }
                         },
                         onDragEnd = {
-                            val shouldDelete = when (direction) {
-                                DeleteSwipeDirection.RIGHT ->
-                                    offsetX >= thresholdPx
+                            val shouldPerformAction =
+                                when (direction) {
+                                    DeleteSwipeDirection.RIGHT ->
+                                        offsetX >= thresholdPx
 
-                                DeleteSwipeDirection.LEFT ->
-                                    offsetX <= -thresholdPx
-                            }
+                                    DeleteSwipeDirection.LEFT ->
+                                        offsetX <= -thresholdPx
+                                }
 
                             offsetX = 0f
 
-                            if (shouldDelete) {
+                            if (shouldPerformAction) {
                                 onDeleteRequest()
                             }
+                        },
+                        onDragCancel = {
+                            offsetX = 0f
                         }
                     )
                 }

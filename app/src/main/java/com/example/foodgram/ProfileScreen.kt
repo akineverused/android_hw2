@@ -1,10 +1,8 @@
 
 package com.example.foodgram
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,15 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,14 +28,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.foodgram.model.Recipe
 import com.example.foodgram.ui.theme.components.DeleteSwipeDirection
-import com.example.foodgram.ui.theme.components.RecipeCard
+import com.example.foodgram.ui.theme.components.ProfileRecipeCard
 import com.example.foodgram.ui.theme.components.RecipeDetailBottomSheet
 import com.example.foodgram.ui.theme.components.SwipeToDeleteRecipeCard
 import com.example.foodgram.ui.theme.main.MainViewModel
 
 @Composable
 fun ProfileScreen(viewModel: MainViewModel) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var selectedTab by rememberSaveable {
         mutableStateOf(0)
@@ -105,7 +101,10 @@ fun ProfileScreen(viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(items = recipes, key = { recipe -> recipe.id }) { recipe ->
+                items(
+                    items = recipes,
+                    key = { recipe -> recipe.id }
+                ) { recipe ->
                     SwipeToDeleteRecipeCard(
                         direction = if (selectedTab == 0) {
                             DeleteSwipeDirection.RIGHT
@@ -114,15 +113,16 @@ fun ProfileScreen(viewModel: MainViewModel) {
                         },
                         onDeleteRequest = {
                             recipePendingDeletion = recipe
+                        },
+                        content = {
+                            ProfileRecipeCard(
+                                recipe = recipe,
+                                onClick = {
+                                    viewModel.selectRecipeForDetails(recipe)
+                                }
+                            )
                         }
-                    ) {
-                        RecipeCard(
-                            recipe = recipe,
-                            onClick = {
-                                viewModel.selectRecipeForDetails(recipe)
-                            }
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -169,18 +169,14 @@ fun ProfileScreen(viewModel: MainViewModel) {
                             viewModel.deleteMyRecipe(recipe)
                         }
 
-                        if (
-                            uiState.selectedRecipeForDetails?.id == recipe.id
-                        ) {
+                        if (uiState.selectedRecipeForDetails?.id == recipe.id) {
                             viewModel.selectRecipeForDetails(null)
                         }
 
                         recipePendingDeletion = null
                     }
                 ) {
-                    Text(
-                        if (selectedTab == 0) "Remove" else "Delete"
-                    )
+                    Text(if (selectedTab == 0) "Remove" else "Delete")
                 }
             },
             dismissButton = {

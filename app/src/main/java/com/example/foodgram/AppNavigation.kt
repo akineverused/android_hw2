@@ -1,4 +1,3 @@
-
 package com.example.foodgram
 
 import androidx.compose.foundation.layout.padding
@@ -24,6 +23,8 @@ import com.example.foodgram.ui.theme.main.MainViewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 @Composable
 fun AppNavigation() {
@@ -91,7 +92,10 @@ fun AppNavigation() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Feed.route) {
-                MainScreen(viewModel = viewModel)
+                MainScreen(
+                    viewModel = viewModel,
+                    navController = navController
+                )
             }
 
             composable(Screen.AddRecipe.route) {
@@ -125,7 +129,28 @@ fun AppNavigation() {
             }
 
             composable(Screen.Profile.route) {
-                ProfileScreen(viewModel = viewModel)
+                ProfileScreen(
+                    viewModel = viewModel
+                )
+            }
+
+            composable(
+                route = Screen.UserProfile.route,
+                arguments = listOf(
+                    navArgument("userId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")
+
+                if (userId != null) {
+                    UserProfileScreen(
+                        userId = userId,
+                        navController = navController,
+                        viewModel = viewModel
+                    )
+                }
             }
         }
     }

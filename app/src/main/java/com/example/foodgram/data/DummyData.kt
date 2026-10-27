@@ -10,6 +10,7 @@ object DummyData {
             category = "Главное блюдо",
             cookingTimeMinutes = 90,
             description = "Традиционный восточный плов с говядиной, морковью и специями.",
+            imageUrl = "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1000&q=85",
             ingredients = listOf("Говядина - 500г", "Рис - 500г", "Морковь - 500г", "Лук - 200г", "Зира, чеснок"),
             instructions = listOf(
                 "Раскалить масло и обжарить лук до золотистой корочки.",
@@ -25,6 +26,7 @@ object DummyData {
             category = "Главное блюдо",
             cookingTimeMinutes = 20,
             description = "Итальянская паста с гуанчале, желтками и сыром Пекорино Романо.",
+            imageUrl = "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=1000&q=85",
             ingredients = listOf("Спагетти - 200г", "Грудинка/Панчетта - 100г", "Желтки - 3 шт", "Сыр - 50г", "Черный перец"),
             instructions = listOf(
                 "Отварить спагетти в подсоленной воде до состояния al dente.",
@@ -39,6 +41,7 @@ object DummyData {
             category = "Десерт",
             cookingTimeMinutes = 45,
             description = "Нежный творожный десерт с хрустящей песочной основой и ягодным соусом.",
+            imageUrl = "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=1000&q=85",
             ingredients = listOf("Печенье - 200г", "Сливочное масло - 80г", "Творожный сыр - 400г", "Сливки - 150мл", "Ягоды - 100г"),
             instructions = listOf(
                 "Измельчить печенье в крошку и смешать с растопленным маслом.",
@@ -53,6 +56,7 @@ object DummyData {
             category = "Завтрак",
             cookingTimeMinutes = 15,
             description = "Американские пышные оладушки к завтраку с сиропом или медом.",
+            imageUrl = "https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=1000&q=85",
             ingredients = listOf("Мука - 200г", "Молоко - 200мл", "Яйцо - 1 шт", "Сахар - 2 ст.л.", "Разрыхлитель - 1 ч.л."),
             instructions = listOf(
                 "Смешать сухие ингредиенты.",
@@ -67,6 +71,7 @@ object DummyData {
             category = "Напитки",
             cookingTimeMinutes = 5,
             description = "Густой питательный коктейль из спелых бананов и молока.",
+            imageUrl = "https://images.unsplash.com/photo-1505252585461-04db1eb84625?auto=format&fit=crop&w=1000&q=85",
             ingredients = listOf("Банан - 2 шт", "Молоко - 300мл", "Ванильный мороженое - 50г"),
             instructions = listOf(
                 "Нарезать бананы кружочками.",
@@ -80,6 +85,7 @@ object DummyData {
             category = "Перекус",
             cookingTimeMinutes = 15,
             description = "Легкий и сытный салат с куриным филе, сухариками и соусом.",
+            imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1000&q=85",
             ingredients = listOf("Листья салата - 100г", "Куриное филе - 150г", "Сухарики - 30г", "Черри - 50г"),
             instructions = listOf(
                 "Обжарить куриное филе.",

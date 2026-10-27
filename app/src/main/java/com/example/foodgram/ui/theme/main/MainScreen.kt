@@ -1,5 +1,6 @@
 package com.example.foodgram.ui.theme.main
 
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,8 +9,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import com.example.foodgram.Screen
+import com.example.foodgram.model.CurrentUser
 import com.example.foodgram.ui.theme.components.ActionButtonsRow
 import com.example.foodgram.ui.theme.components.FilterChipGroup
 import com.example.foodgram.ui.theme.components.RecipeCard
@@ -19,20 +26,39 @@ import com.example.foodgram.ui.theme.components.RecipeDetailBottomSheet
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
+    var isSearchVisible by rememberSaveable {
+        mutableStateOf(false)
+    }
 
-    val categories = listOf("Все", "Главное блюдо", "Десерт", "Завтрак", "Перекус", "Напитки")
+    val categories = listOf(
+        "Все",
+        "Главное блюдо",
+        "Десерт",
+        "Завтрак",
+        "Перекус",
+        "Напитки"
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Food Swiper 🍔", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Food Swiper 🍔",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 actions = {
-                    IconButton(onClick = { isSearchVisible = !isSearchVisible }) {
+                    IconButton(
+                        onClick = {
+                            isSearchVisible = !isSearchVisible
+                        }
+                    ) {
                         Text(if (isSearchVisible) "✖️" else "🔍")
                     }
                 }
@@ -48,18 +74,21 @@ fun MainScreen(
             if (isSearchVisible) {
                 OutlinedTextField(
                     value = uiState.searchQuery,
-                    onValueChange = { viewModel.onSearchQueryChanged(it) },
+                    onValueChange = viewModel::onSearchQueryChanged,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Поиск по названию рецепта...") },
+                    placeholder = {
+                        Text("Поиск по названию рецепта...")
+                    },
                     singleLine = true
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
             FilterChipGroup(
                 categories = categories,
                 selectedCategory = uiState.selectedCategory,
-                onCategorySelected = { viewModel.onCategorySelected(it) }
+                onCategorySelected = viewModel::onCategorySelected
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -72,6 +101,7 @@ fun MainScreen(
                     text = "Сохранено: ${uiState.savedRecipes.size}",
                     style = MaterialTheme.typography.labelLarge
                 )
+
                 Text(
                     text = "Пропущено: ${uiState.skippedRecipes.size}",
                     style = MaterialTheme.typography.labelLarge
@@ -80,7 +110,9 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val isSearchingOrFiltering = uiState.searchQuery.isNotBlank() || uiState.selectedCategory != "Все"
+            val isSearchingOrFiltering =
+                uiState.searchQuery.isNotBlank() ||
+                        uiState.selectedCategory != "Все"
 
             if (isSearchingOrFiltering) {
                 if (uiState.availableRecipes.isEmpty()) {
@@ -90,7 +122,10 @@ fun MainScreen(
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Ничего не найдено 😢", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = "Ничего не найдено 😢",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 } else {
                     LazyColumn(
@@ -99,10 +134,26 @@ fun MainScreen(
                             .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.availableRecipes) { recipe ->
+                        items(
+                            items = uiState.availableRecipes,
+                            key = { recipe -> recipe.id }
+                        ) { recipe ->
                             RecipeCard(
                                 recipe = recipe,
-                                onClick = { viewModel.selectRecipeForDetails(recipe) }
+                                onClick = {
+                                    viewModel.selectRecipeForDetails(recipe)
+                                },
+                                onAuthorClick = {
+                                    if (recipe.authorId == CurrentUser.id) {
+                                        navController.navigate(Screen.Profile.route) {
+                                            launchSingleTop = true
+                                        }
+                                    } else {
+                                        navController.navigate(
+                                            Screen.UserProfile.createRoute(recipe.authorId)
+                                        )
+                                    }
+                                }
                             )
                         }
                     }
@@ -119,9 +170,58 @@ fun MainScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (currentRecipe != null) {
+                        var dragAmount by remember(currentRecipe.id) {
+                            mutableFloatStateOf(0f)
+                        }
+
                         RecipeCard(
                             recipe = currentRecipe,
-                            onClick = { viewModel.selectRecipeForDetails(currentRecipe) }
+                            onClick = {
+                                viewModel.selectRecipeForDetails(currentRecipe)
+                            },
+                            onAuthorClick = {
+                                if (currentRecipe.authorId == CurrentUser.id) {
+                                    navController.navigate(Screen.Profile.route) {
+                                        launchSingleTop = true
+                                    }
+                                } else {
+                                    navController.navigate(
+                                        Screen.UserProfile.createRoute(currentRecipe.authorId)
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    translationX = dragAmount
+                                    rotationZ = dragAmount / 30f
+                                }
+                                .pointerInput(currentRecipe.id) {
+                                    detectHorizontalDragGestures(
+                                        onHorizontalDrag = { _, dragDelta ->
+                                            dragAmount += dragDelta
+                                        },
+                                        onDragEnd = {
+                                            when {
+                                                dragAmount > 100f -> {
+                                                    viewModel.onSaveRecipe(
+                                                        currentRecipe
+                                                    )
+                                                }
+
+                                                dragAmount < -100f -> {
+                                                    viewModel.onSkipRecipe(
+                                                        currentRecipe
+                                                    )
+                                                }
+                                            }
+
+                                            dragAmount = 0f
+                                        },
+                                        onDragCancel = {
+                                            dragAmount = 0f
+                                        }
+                                    )
+                                }
                         )
                     } else {
                         Column(
@@ -131,8 +231,12 @@ fun MainScreen(
                                 text = "Все рецепты просмотрены! 🎉",
                                 style = MaterialTheme.typography.titleMedium
                             )
+
                             Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = { viewModel.resetDeck() }) {
+
+                            Button(
+                                onClick = viewModel::resetDeck
+                            ) {
                                 Text("Начать заново")
                             }
                         }
@@ -143,8 +247,12 @@ fun MainScreen(
 
                 if (currentRecipe != null) {
                     ActionButtonsRow(
-                        onSkip = { viewModel.onSkipRecipe(currentRecipe) },
-                        onSave = { viewModel.onSaveRecipe(currentRecipe) }
+                        onSkip = {
+                            viewModel.onSkipRecipe(currentRecipe)
+                        },
+                        onSave = {
+                            viewModel.onSaveRecipe(currentRecipe)
+                        }
                     )
                 }
             }
@@ -155,7 +263,9 @@ fun MainScreen(
         uiState.selectedRecipeForDetails?.let { recipe ->
             RecipeDetailBottomSheet(
                 recipe = recipe,
-                onDismiss = { viewModel.selectRecipeForDetails(null) }
+                onDismiss = {
+                    viewModel.selectRecipeForDetails(null)
+                }
             )
         }
     }

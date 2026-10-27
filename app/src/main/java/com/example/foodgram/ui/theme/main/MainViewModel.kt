@@ -7,66 +7,93 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
+
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
-    private val allOriginalRecipes = DummyData.sampleRecipes
+    private var searchJob: Job? = null
 
     init {
-        _uiState.update { it.copy(availableRecipes = allOriginalRecipes) }
+        val recipes = DummyData.sampleRecipes
+        _uiState.update {
+            it.copy(
+                allRecipes = recipes,
+                availableRecipes = recipes
+            )
+        }
     }
 
     fun onSaveRecipe(recipe: Recipe) {
         _uiState.update { currentState ->
-            val alreadySaved = currentState.savedRecipes.any { it.id == recipe.id }
-            val updatedSaved = if (alreadySaved) {
+            val updatedSaved = if (
+                currentState.savedRecipes.any { it.id == recipe.id }
+            ) {
                 currentState.savedRecipes
             } else {
                 currentState.savedRecipes + recipe
             }
 
-            val updatedSkipped = currentState.skippedRecipes.filter { it.id != recipe.id }
-
             currentState.copy(
                 savedRecipes = updatedSaved,
-                skippedRecipes = updatedSkipped
+                skippedRecipes = currentState.skippedRecipes.filter {
+                    it.id != recipe.id
+                }
             )
         }
+
         applyFilters()
     }
 
     fun onSkipRecipe(recipe: Recipe) {
         _uiState.update { currentState ->
-            val alreadySkipped = currentState.skippedRecipes.any { it.id == recipe.id }
-            val updatedSkipped = if (alreadySkipped) {
+            val updatedSkipped = if (
+                currentState.skippedRecipes.any { it.id == recipe.id }
+            ) {
                 currentState.skippedRecipes
             } else {
                 currentState.skippedRecipes + recipe
             }
 
-            val updatedSaved = currentState.savedRecipes.filter { it.id != recipe.id }
-
             currentState.copy(
-                savedRecipes = updatedSaved,
-                skippedRecipes = updatedSkipped
+                skippedRecipes = updatedSkipped,
+                savedRecipes = currentState.savedRecipes.filter {
+                    it.id != recipe.id
+                }
             )
         }
+
         applyFilters()
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
-        applyFilters()
+        _uiState.update {
+            it.copy(searchQuery = query)
+        }
+
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
+            delay(300)
+            applyFilters()
+        }
     }
 
     fun onCategorySelected(category: String) {
-        _uiState.update { it.copy(selectedCategory = category) }
+        _uiState.update {
+            it.copy(selectedCategory = category)
+        }
         applyFilters()
     }
 
     fun selectRecipeForDetails(recipe: Recipe?) {
-        _uiState.update { it.copy(selectedRecipeForDetails = recipe) }
+        _uiState.update {
+            it.copy(selectedRecipeForDetails = recipe)
+        }
     }
 
     fun resetDeck() {
@@ -82,24 +109,81 @@ class MainViewModel : ViewModel() {
     }
 
     private fun applyFilters() {
-        val query = _uiState.value.searchQuery.trim().lowercase()
-        val category = _uiState.value.selectedCategory
+        val state = _uiState.value
+        val query = state.searchQuery.trim().lowercase()
+        val category = state.selectedCategory
 
-        val filtered = if (query.isBlank()) {
-            allOriginalRecipes.filter { recipe ->
-                val matchesCategory = (category == "Все") || (recipe.category == category)
-                val notSaved = _uiState.value.savedRecipes.none { it.id == recipe.id }
-                val notSkipped = _uiState.value.skippedRecipes.none { it.id == recipe.id }
-                matchesCategory && notSaved && notSkipped
-            }
-        } else {
-            allOriginalRecipes.filter { recipe ->
-                val matchesQuery = recipe.title.lowercase().contains(query)
-                val matchesCategory = (category == "Все") || (recipe.category == category)
-                matchesQuery && matchesCategory
-            }
+        val filtered = state.allRecipes.filter { recipe ->
+            val matchesQuery = query.isBlank() ||
+                    recipe.title.lowercase().contains(query) ||
+                    recipe.description.lowercase().contains(query) ||
+                    recipe.category.lowercase().contains(query) ||
+                    recipe.authorName.lowercase().contains(query)
+
+            val matchesCategory =
+                category == "Все" || recipe.category == category
+
+            val isNotAlreadyProcessed =
+                state.searchQuery.isNotBlank() ||
+                        category != "Все" ||
+                        (
+                                state.savedRecipes.none { it.id == recipe.id } &&
+                                        state.skippedRecipes.none { it.id == recipe.id }
+                                )
+
+            matchesQuery && matchesCategory && isNotAlreadyProcessed
         }
 
-        _uiState.update { it.copy(availableRecipes = filtered) }
+        _uiState.update {
+            it.copy(availableRecipes = filtered)
+        }
+    }
+
+    fun addRecipe(recipe: Recipe) {
+        _uiState.update { currentState ->
+            val updatedCatalog = currentState.allRecipes
+                .filterNot { it.id == recipe.id } + recipe
+
+            currentState.copy(
+                allRecipes = updatedCatalog,
+                myRecipes = currentState.myRecipes
+                    .filterNot { it.id == recipe.id } + recipe
+            )
+        }
+
+        applyFilters()
+    }
+
+    fun removeSavedRecipe(recipe: Recipe) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                savedRecipes = currentState.savedRecipes.filter {
+                    it.id != recipe.id
+                }
+            )
+        }
+
+        applyFilters()
+    }
+
+    fun deleteMyRecipe(recipe: Recipe) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                myRecipes = currentState.myRecipes.filter {
+                    it.id != recipe.id
+                },
+                allRecipes = currentState.allRecipes.filter {
+                    it.id != recipe.id
+                },
+                savedRecipes = currentState.savedRecipes.filter {
+                    it.id != recipe.id
+                },
+                skippedRecipes = currentState.skippedRecipes.filter {
+                    it.id != recipe.id
+                }
+            )
+        }
+
+        applyFilters()
     }
 }

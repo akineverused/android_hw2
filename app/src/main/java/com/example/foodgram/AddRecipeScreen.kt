@@ -1,4 +1,3 @@
-
 package com.example.foodgram
 
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +37,9 @@ import android.net.Uri
 import coil3.compose.AsyncImage
 import com.example.foodgram.model.CurrentUser
 
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddRecipeScreen(
@@ -58,6 +60,17 @@ fun AddRecipeScreen(
 ) {
     var categoryMenuExpanded by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    var validationError by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(validationError) {
+        if (validationError) {
+            delay(10_000)
+            validationError = false
+        }
     }
 
     var selectedImageUri by rememberSaveable {
@@ -284,16 +297,36 @@ fun AddRecipeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (validationError) {
+            Text(
+                text = "Please fill in the required fields correctly.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         Button(
             onClick = {
                 val time = cookingTime.toIntOrNull()
+
+                val validIngredients = ingredients
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+
+                val validInstructions = instructions
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
 
                 if (
                     title.isNotBlank() &&
                     category.isNotBlank() &&
                     time != null &&
                     time > 0 &&
-                    description.isNotBlank()
+                    description.isNotBlank() &&
+                    validIngredients.isNotEmpty() &&
+                    validInstructions.isNotEmpty()
                 ) {
                     val recipe = Recipe(
                         id = System.currentTimeMillis().toInt(),
@@ -301,12 +334,8 @@ fun AddRecipeScreen(
                         category = category.trim(),
                         cookingTimeMinutes = time,
                         description = description.trim(),
-                        ingredients = ingredients
-                            .map { it.trim() }
-                            .filter { it.isNotBlank() },
-                        instructions = instructions
-                            .map { it.trim() }
-                            .filter { it.isNotBlank() },
+                        ingredients = validIngredients,
+                        instructions = validInstructions,
                         imageUrl = selectedImageUri.orEmpty(),
                         authorId = CurrentUser.id,
                         authorName = CurrentUser.name
@@ -314,7 +343,7 @@ fun AddRecipeScreen(
 
                     onRecipeAdded(recipe)
                 } else {
-                    println("Form validation failed")
+                    validationError = true
                 }
             },
             modifier = Modifier.fillMaxWidth()

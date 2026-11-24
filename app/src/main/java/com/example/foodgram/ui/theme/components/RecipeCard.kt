@@ -12,16 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
 import com.example.foodgram.model.Recipe
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BookmarkBorder
+import java.util.Locale
 
 @Composable
 fun getCategoryColors(category: String): Pair<Color, Color> {
@@ -43,7 +41,9 @@ fun RecipeCard(
     recipe: Recipe,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onAuthorClick: (() -> Unit)? = null
+    onAuthorClick: (() -> Unit)? = null,
+    averageRating: Double? = null,
+    ratingCount: Int = 0
 ) {
     val (backgroundColor, accentColor) = getCategoryColors(recipe.category)
 
@@ -122,7 +122,7 @@ fun RecipeCard(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(50),
-                        color = Color.White.copy(alpha = 0.92f)
+                        color = Color.White.copy(alpha = 0.94f)
                     ) {
                         Text(
                             text = recipe.category,
@@ -138,7 +138,7 @@ fun RecipeCard(
 
                     Surface(
                         shape = RoundedCornerShape(50),
-                        color = Color.White.copy(alpha = 0.92f)
+                        color = Color.White.copy(alpha = 0.94f)
                     ) {
                         Text(
                             text = "◷ ${recipe.cookingTimeMinutes} мин",
@@ -155,7 +155,7 @@ fun RecipeCard(
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     Text(
                         text = recipe.title,
@@ -166,6 +166,37 @@ fun RecipeCard(
                         overflow = TextOverflow.Ellipsis
                     )
 
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = Color.White.copy(alpha = 0.75f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(
+                                horizontal = 10.dp,
+                                vertical = 5.dp
+                            ),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Text(
+                                text = "★",
+                                color = Color(0xFFE5A323),
+                                fontSize = 17.sp
+                            )
+
+                            Text(
+                                text = if (averageRating != null && ratingCount > 0) {
+                                    "${String.format(Locale.getDefault(), "%.1f", averageRating)} · $ratingCount оценок"
+                                } else {
+                                    "Пока нет оценок"
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFF554B42),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
                     Text(
                         text = recipe.description,
                         style = MaterialTheme.typography.bodyLarge,
@@ -174,7 +205,7 @@ fun RecipeCard(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
                     HorizontalDivider(
                         color = accentColor.copy(alpha = 0.2f)

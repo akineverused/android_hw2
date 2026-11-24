@@ -1,96 +1,139 @@
 package com.example.foodgram
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.foodgram.data.local.RecipeDatabaseProvider
+import com.example.foodgram.data.repository.RecipeRepository
+import com.example.foodgram.ui.theme.main.EditRecipeScreen
 import com.example.foodgram.ui.theme.main.MainScreen
 import com.example.foodgram.ui.theme.main.MainViewModel
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import com.example.foodgram.ui.theme.main.MainViewModelFactory
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val viewModel: MainViewModel = viewModel()
+    val context = LocalContext.current
+
+    val repository = remember {
+        val database = RecipeDatabaseProvider.getDatabase(context)
+
+        RecipeRepository(
+            recipeDao = database.recipeDao(),
+            interactionDao = database.recipeInteractionDao(),
+            ratingDao = database.recipeRatingDao()
+        )
+    }
+
+    val factory = remember(repository) {
+        MainViewModelFactory(repository)
+    }
+
+    val viewModel: MainViewModel = viewModel(factory = factory)
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     var title by rememberSaveable { mutableStateOf("") }
     var category by rememberSaveable { mutableStateOf("") }
     var cookingTime by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
     var ingredients by rememberSaveable { mutableStateOf(listOf("")) }
     var instructions by rememberSaveable { mutableStateOf(listOf("")) }
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = currentRoute == Screen.Feed.route,
-                    onClick = {
-                        navController.navigate(Screen.Feed.route) {
-                            popUpTo(Screen.Feed.route) {
-                                inclusive = false
+            if (currentRoute != Screen.EditRecipe.route) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = currentRoute == Screen.Feed.route,
+                        onClick = {
+                            navController.navigate(Screen.Feed.route) {
+                                popUpTo(Screen.Feed.route) {
+                                    inclusive = false
+                                }
+                                launchSingleTop = true
                             }
-                            launchSingleTop = true
-                        }
-                    },
-                    icon = {
-                        Icon(Icons.Default.Home, contentDescription = "Feed")
-                    },
-                    label = { Text("Feed") }
-                )
+                        },
+                        icon = {
+                            Icon(
+                                Icons.Default.Home,
+                                contentDescription = "Feed"
+                            )
+                        },
+                        label = { Text("Feed") }
+                    )
 
-                NavigationBarItem(
-                    selected = currentRoute == Screen.AddRecipe.route,
-                    onClick = {
-                        navController.navigate(Screen.AddRecipe.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    icon = {
-                        Icon(Icons.Default.Add, contentDescription = "Add recipe")
-                    },
-                    label = { Text("Add") }
-                )
+                    NavigationBarItem(
+                        selected = currentRoute == Screen.AddRecipe.route,
+                        onClick = {
+                            navController.navigate(Screen.AddRecipe.route) {
+                                launchSingleTop = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Add recipe"
+                            )
+                        },
+                        label = { Text("Add") }
+                    )
 
-                NavigationBarItem(
-                    selected = currentRoute == Screen.Profile.route,
-                    onClick = {
-                        navController.navigate(Screen.Profile.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    icon = {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
-                    },
-                    label = { Text("Profile") }
-                )
+                    NavigationBarItem(
+                        selected = currentRoute == Screen.Profile.route,
+                        onClick = {
+                            navController.navigate(Screen.Profile.route) {
+                                launchSingleTop = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Profile"
+                            )
+                        },
+                        label = { Text("Profile") }
+                    )
+                }
             }
         }
     ) { innerPadding ->
+
         NavHost(
             navController = navController,
             startDestination = Screen.Feed.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+
             composable(Screen.Feed.route) {
                 MainScreen(
                     viewModel = viewModel,
@@ -115,6 +158,7 @@ fun AppNavigation() {
                         description = ""
                         ingredients = listOf("")
                         instructions = listOf("")
+
                         viewModel.addRecipe(recipe)
                         navController.popBackStack()
                     },
@@ -130,7 +174,12 @@ fun AppNavigation() {
 
             composable(Screen.Profile.route) {
                 ProfileScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onEditRequest = { recipe ->
+                        navController.navigate(
+                            Screen.EditRecipe.createRoute(recipe.id)
+                        )
+                    }
                 )
             }
 
@@ -142,6 +191,7 @@ fun AppNavigation() {
                     }
                 )
             ) { backStackEntry ->
+
                 val userId = backStackEntry.arguments?.getString("userId")
 
                 if (userId != null) {
@@ -151,6 +201,33 @@ fun AppNavigation() {
                         viewModel = viewModel
                     )
                 }
+            }
+
+            composable(
+                route = Screen.EditRecipe.route,
+                arguments = listOf(
+                    navArgument("recipeId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+
+                val recipeId = backStackEntry.arguments?.getInt("recipeId")
+
+                val recipe = uiState.allRecipes.firstOrNull {
+                    it.id == recipeId
+                }
+
+                EditRecipeScreen(
+                    recipe = recipe,
+                    onSave = { updatedRecipe ->
+                        viewModel.updateRecipe(updatedRecipe)
+                        navController.popBackStack()
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }

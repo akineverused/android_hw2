@@ -15,9 +15,14 @@ Built with **Kotlin**, **Jetpack Compose**, and **Material 3**, following the **
 - **Recipe Details** — View recipe descriptions, ingredients, cooking time, and step-by-step instructions in a `ModalBottomSheet`.
 - **Saved Recipes** — View and manage saved recipes in the profile section.
 - **Add Your Own Recipes** — Create recipes with a title, category, cooking time, description, ingredients, instructions, and an image.
+- **Edit Recipes** — Update existing recipes and their information.
+- **Delete Recipes** — Remove recipes with a confirmation dialog.
+- **Recipe Validation** — Validate required fields when creating or editing recipes and display feedback for invalid input.
+- **Recipe Ratings** — Rate recipes from 1 to 5 stars, view average ratings, and see the total number of ratings.
 - **User Profiles** — View your own recipes and explore recipes associated with other authors.
 - **Swipe Interactions** — Use swipe gestures to manage recipes in the profile.
-- **Reactive UI** — Update the interface in response to state changes using `ViewModel` and `StateFlow`.
+- **Local Data Persistence** — Store recipes and user interactions locally using Room Database, keeping data available after restarting the application.
+- **Reactive UI** — Update the interface in response to database and state changes using `ViewModel`, `StateFlow`, and Kotlin Flow.
 
 ## 🛠 Tech Stack
 
@@ -26,7 +31,10 @@ Built with **Kotlin**, **Jetpack Compose**, and **Material 3**, following the **
 - **Design System:** Material 3
 - **Architecture:** MVVM (Model–View–ViewModel)
 - **State Management:** `StateFlow`, `remember`, `rememberSaveable`
-- **Asynchronous Programming:** Kotlin Coroutines
+- **Database:** Room Database (SQLite)
+- **Data Access:** DAO (Data Access Objects)
+- **Data Layer:** Repository Pattern
+- **Asynchronous Programming:** Kotlin Coroutines and Flow
 - **Image Loading:** Coil 3
 - **Navigation:** Navigation Compose
 - **Build System:** Gradle
@@ -36,8 +44,10 @@ Built with **Kotlin**, **Jetpack Compose**, and **Material 3**, following the **
 The application is organized into several main parts:
 
 - **Model** — Recipe data models.
-- **ViewModel** — Application state and recipe-related operations.
-- **Screens** — Main feed, recipe creation, profiles, and recipe browsing.
+- **Data** — Room database configuration, entities, DAOs, and type converters.
+- **Repository** — Handles data operations and provides an abstraction between the database and ViewModels.
+- **ViewModel** — Application state and recipe-related operations, exposed through `StateFlow`.
+- **Screens** — Main feed, recipe creation and editing, profiles, and recipe browsing.
 - **Components** — Reusable UI elements, including recipe cards and recipe detail sheets.
 - **Navigation** — Navigation between application screens.
 - **UI Theme** — Application colors, typography, and Material 3 styling.
@@ -51,6 +61,12 @@ The application is organized into several main parts:
 |                Add Recipe                 |               User Profile               |                  Saved Recipes                  |
 |:-----------------------------------------:|:----------------------------------------:|:-----------------------------------------------:|
 | ![Add Recipe](screenshots/add_recipe.png) | ![User Profile](screenshots/profile.png) | ![Saved Recipes](screenshots/saved_recipes.png) |
+
+### Additional Feature: Recipe Ratings
+
+|                  Recipe Rating                  |                 Rating on Recipe Card                 |                  Updated Rating                   |
+|:-----------------------------------------------:|:-----------------------------------------------------:|:-------------------------------------------------:|
+| ![Recipe Rating](screenshots/rating_detail.png) | ![Rating on Recipe Card](screenshots/rating_card.png) | ![Updated Rating](screenshots/rating_updated.png) |
 
 ## ⚙️ How to Run
 
@@ -71,4 +87,7 @@ The application is organized into several main parts:
 ## 📌 Notes
 
 - The application uses sample recipes for demonstration.
-- Recipe and profile data are managed through the application's current state-management implementation.
+- Recipe data and user interactions are stored locally using Room Database.
+- Recipe operations are handled through the Repository and DAO layers.
+- Changes to recipes and ratings are observed reactively and reflected in the UI without requiring manual refresh.
+- Local data persists after restarting the application.

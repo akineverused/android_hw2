@@ -138,6 +138,12 @@ fun UserProfileScreen(
         uiState.selectedRecipeForDetails?.let { recipe ->
             RecipeDetailBottomSheet(
                 recipe = recipe,
+                averageRating = uiState.averageRating,
+                ratingCount = uiState.ratingCount,
+                userRating = uiState.userRating,
+                onRate = { rating ->
+                    viewModel.rateRecipe(recipe.id, rating)
+                },
                 onDismiss = {
                     viewModel.selectRecipeForDetails(null)
                 }

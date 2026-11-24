@@ -1,9 +1,12 @@
 package com.example.foodgram.ui.theme.main
 
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,9 +47,18 @@ fun MainScreen(
         "Напитки"
     )
 
+    val timeFilters: List<Pair<String, Int?>> = listOf(
+        "Любое время" to null,
+        "До 15 мин" to 15,
+        "До 30 мин" to 30,
+        "До 60 мин" to 60
+    )
+
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0.dp),
                 title = {
                     Text(
                         text = "Food Swiper 🍔",
@@ -56,42 +68,108 @@ fun MainScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            isSearchVisible = !isSearchVisible
+                            if (isSearchVisible) {
+                                isSearchVisible = false
+                                viewModel.resetFilters()
+                            } else {
+                                isSearchVisible = true
+                            }
                         }
                     ) {
-                        Text(if (isSearchVisible) "✖️" else "🔍")
+                        Text(
+                            if (isSearchVisible) "✖️" else "🔍"
+                        )
                     }
                 }
             )
         }
     ) { innerPadding ->
+
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
+
             if (isSearchVisible) {
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChanged,
+
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = {
-                        Text("Поиск по названию рецепта...")
-                    },
-                    singleLine = true
-                )
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = 0.35f
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
 
-                Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = uiState.searchQuery,
+                            onValueChange = viewModel::onSearchQueryChanged,
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                Text("Поиск рецептов...")
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp)
+                        )
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Категории",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            FilterChipGroup(
+                                categories = categories,
+                                selectedCategory = uiState.selectedCategory,
+                                onCategorySelected = viewModel::onCategorySelected
+                            )
+                        }
+
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Время приготовления",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                timeFilters.forEach { (label, maxTime) ->
+                                    FilterChip(
+                                        selected = uiState.selectedMaxCookingTime == maxTime,
+                                        onClick = {
+                                            viewModel.onCookingTimeSelected(maxTime)
+                                        },
+                                        label = {
+                                            Text(label)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
             }
-
-            FilterChipGroup(
-                categories = categories,
-                selectedCategory = uiState.selectedCategory,
-                onCategorySelected = viewModel::onCategorySelected
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -112,9 +190,11 @@ fun MainScreen(
 
             val isSearchingOrFiltering =
                 uiState.searchQuery.isNotBlank() ||
-                        uiState.selectedCategory != "Все"
+                        uiState.selectedCategory != "Все" ||
+                        uiState.selectedMaxCookingTime != null
 
             if (isSearchingOrFiltering) {
+
                 if (uiState.availableRecipes.isEmpty()) {
                     Box(
                         modifier = Modifier
@@ -132,7 +212,11 @@ fun MainScreen(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(
+                            top = 4.dp,
+                            bottom = 16.dp
+                        )
                     ) {
                         items(
                             items = uiState.availableRecipes,
@@ -153,14 +237,16 @@ fun MainScreen(
                                             Screen.UserProfile.createRoute(recipe.authorId)
                                         )
                                     }
-                                }
+                                },
+                                averageRating = uiState.ratingSummaries[recipe.id]?.first,
+                                ratingCount = uiState.ratingSummaries[recipe.id]?.second ?: 0
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
+
             } else {
+
                 val currentRecipe = uiState.availableRecipes.firstOrNull()
 
                 Box(
@@ -170,6 +256,7 @@ fun MainScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (currentRecipe != null) {
+
                         var dragAmount by remember(currentRecipe.id) {
                             mutableFloatStateOf(0f)
                         }
@@ -190,6 +277,8 @@ fun MainScreen(
                                     )
                                 }
                             },
+                            averageRating = uiState.ratingSummaries[currentRecipe.id]?.first,
+                            ratingCount = uiState.ratingSummaries[currentRecipe.id]?.second ?: 0,
                             modifier = Modifier
                                 .graphicsLayer {
                                     translationX = dragAmount
@@ -203,15 +292,11 @@ fun MainScreen(
                                         onDragEnd = {
                                             when {
                                                 dragAmount > 100f -> {
-                                                    viewModel.onSaveRecipe(
-                                                        currentRecipe
-                                                    )
+                                                    viewModel.onSaveRecipe(currentRecipe)
                                                 }
 
                                                 dragAmount < -100f -> {
-                                                    viewModel.onSkipRecipe(
-                                                        currentRecipe
-                                                    )
+                                                    viewModel.onSkipRecipe(currentRecipe)
                                                 }
                                             }
 
@@ -223,6 +308,7 @@ fun MainScreen(
                                     )
                                 }
                         )
+
                     } else {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -263,6 +349,12 @@ fun MainScreen(
         uiState.selectedRecipeForDetails?.let { recipe ->
             RecipeDetailBottomSheet(
                 recipe = recipe,
+                averageRating = uiState.averageRating,
+                ratingCount = uiState.ratingCount,
+                userRating = uiState.userRating,
+                onRate = { rating ->
+                    viewModel.rateRecipe(recipe.id, rating)
+                },
                 onDismiss = {
                     viewModel.selectRecipeForDetails(null)
                 }

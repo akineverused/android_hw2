@@ -1,4 +1,3 @@
-
 package com.example.foodgram
 
 import androidx.compose.foundation.layout.Arrangement
@@ -27,14 +26,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.foodgram.model.Recipe
-import com.example.foodgram.ui.theme.components.DeleteSwipeDirection
 import com.example.foodgram.ui.theme.components.ProfileRecipeCard
 import com.example.foodgram.ui.theme.components.RecipeDetailBottomSheet
 import com.example.foodgram.ui.theme.components.SwipeToDeleteRecipeCard
+import com.example.foodgram.ui.theme.components.SwipeableRecipeCard
+import com.example.foodgram.ui.theme.components.DeleteSwipeDirection
 import com.example.foodgram.ui.theme.main.MainViewModel
 
 @Composable
-fun ProfileScreen(viewModel: MainViewModel) {
+fun ProfileScreen(
+    viewModel: MainViewModel,
+    onEditRequest: (Recipe) -> Unit
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var selectedTab by rememberSaveable {
@@ -68,13 +71,17 @@ fun ProfileScreen(viewModel: MainViewModel) {
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
-                text = { Text("Saved (${uiState.savedRecipes.size})") }
+                text = {
+                    Text("Saved (${uiState.savedRecipes.size})")
+                }
             )
 
             Tab(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
-                text = { Text("My recipes (${uiState.myRecipes.size})") }
+                text = {
+                    Text("My recipes (${uiState.myRecipes.size})")
+                }
             )
         }
 
@@ -105,24 +112,40 @@ fun ProfileScreen(viewModel: MainViewModel) {
                     items = recipes,
                     key = { recipe -> recipe.id }
                 ) { recipe ->
-                    SwipeToDeleteRecipeCard(
-                        direction = if (selectedTab == 0) {
-                            DeleteSwipeDirection.RIGHT
-                        } else {
-                            DeleteSwipeDirection.LEFT
-                        },
-                        onDeleteRequest = {
-                            recipePendingDeletion = recipe
-                        },
-                        content = {
-                            ProfileRecipeCard(
-                                recipe = recipe,
-                                onClick = {
-                                    viewModel.selectRecipeForDetails(recipe)
-                                }
-                            )
-                        }
-                    )
+
+                    if (selectedTab == 0) {
+                        SwipeToDeleteRecipeCard(
+                            direction = DeleteSwipeDirection.RIGHT,
+                            onDeleteRequest = {
+                                recipePendingDeletion = recipe
+                            },
+                            content = {
+                                ProfileRecipeCard(
+                                    recipe = recipe,
+                                    onClick = {
+                                        viewModel.selectRecipeForDetails(recipe)
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        SwipeableRecipeCard(
+                            onSwipeRight = {
+                                onEditRequest(recipe)
+                            },
+                            onSwipeLeft = {
+                                recipePendingDeletion = recipe
+                            },
+                            content = {
+                                ProfileRecipeCard(
+                                    recipe = recipe,
+                                    onClick = {
+                                        viewModel.selectRecipeForDetails(recipe)
+                                    }
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -131,6 +154,12 @@ fun ProfileScreen(viewModel: MainViewModel) {
     uiState.selectedRecipeForDetails?.let { recipe ->
         RecipeDetailBottomSheet(
             recipe = recipe,
+            averageRating = uiState.averageRating,
+            ratingCount = uiState.ratingCount,
+            userRating = uiState.userRating,
+            onRate = { rating ->
+                viewModel.rateRecipe(recipe.id, rating)
+            },
             onDismiss = {
                 viewModel.selectRecipeForDetails(null)
             }

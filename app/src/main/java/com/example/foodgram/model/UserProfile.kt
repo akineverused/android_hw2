@@ -1,4 +1,3 @@
-
 package com.example.foodgram.model
 
 data object CurrentUser {

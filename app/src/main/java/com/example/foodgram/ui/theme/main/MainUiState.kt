@@ -10,5 +10,11 @@ data class MainUiState(
     val skippedRecipes: List<Recipe> = emptyList(),
     val searchQuery: String = "",
     val selectedCategory: String = "Все",
-    val selectedRecipeForDetails: Recipe? = null
+    val selectedMaxCookingTime: Int? = null,
+    val selectedRecipeForDetails: Recipe? = null,
+
+    val averageRating: Double? = null,
+    val ratingCount: Int = 0,
+    val userRating: Int? = null,
+    val ratingSummaries: Map<Int, Pair<Double?, Int>> = emptyMap()
 )

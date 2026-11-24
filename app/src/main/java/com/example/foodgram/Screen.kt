@@ -1,4 +1,3 @@
-
 package com.example.foodgram
 
 sealed class Screen(val route: String) {
@@ -9,6 +8,12 @@ sealed class Screen(val route: String) {
     object UserProfile : Screen("user_profile/{userId}") {
         fun createRoute(userId: String): String {
             return "user_profile/$userId"
+        }
+    }
+
+    object EditRecipe : Screen("edit_recipe/{recipeId}") {
+        fun createRoute(recipeId: Int): String {
+            return "edit_recipe/$recipeId"
         }
     }
 }
